@@ -241,7 +241,69 @@ jdbc:h2:file:~/campusreserve-db/campusreserve;MODE=MySQL;DATABASE_TO_UPPER=false
 
 ---
 
-## 13. 최종 제출 산출물
+## 13. 현재 구현된 MVP
+
+본 저장소에는 문서 기준 MVP를 실행할 수 있는 Maven WAR 프로젝트 구조가 포함되어 있습니다.
+
+- `FrontController` + `CommandFactory` 기반 `*.do` 요청 분기
+- 회원가입, 로그인, 로그아웃
+- PBKDF2 기반 비밀번호 해시 저장
+- Session 기반 MEMBER / ADMIN 권한 분리
+- 스터디룸 / 사물함 목록 조회
+- 날짜별 시간 슬롯 조회
+- `SELECT ... FOR UPDATE` 기반 예약 생성 트랜잭션
+- Mock 결제 저장
+- 내 예약 조회 및 취소 요청
+- 관리자 대시보드, 자원 배치 현황, 전체 예약 조회
+- 관리자 취소 승인 / 거절
+- 일자별 / 자원별 매출 통계
+- JSP `WEB-INF/views` 배치
+- POST 요청 CSRF 토큰 검증
+
+---
+
+## 14. 기본 시연 계정
+
+서버 시작 시 `DatabaseInitializer`가 기본 계정과 자원, 향후 14일의 1시간 단위 슬롯을 생성합니다.
+
+| 역할 | 아이디 | 비밀번호 |
+|---|---|---|
+| 관리자 | `admin` | `admin1234!` |
+| 일반 회원 | `student` | `student1234!` |
+
+---
+
+## 15. 실행 방법
+
+Maven이 설치된 환경에서 다음 명령으로 WAR 파일을 생성합니다.
+
+```bash
+mvn clean package
+```
+
+생성된 `target/campus-reserve.war`를 Tomcat 10.1.x의 `webapps`에 배포합니다.
+
+주의:
+
+- Tomcat 10.1.x 기준이므로 Servlet import는 `jakarta.servlet.*`를 사용합니다.
+- JNDI DataSource는 `src/main/webapp/META-INF/context.xml`에 정의되어 있습니다.
+- H2 JDBC URL은 파일 기반입니다.
+- Tomcat이 JNDI DataSource를 생성할 때 H2 Driver를 찾지 못하면 H2 JAR를 Tomcat `lib`에 추가하거나 WAR 의존성 배포 설정을 확인합니다.
+
+---
+
+## 16. 보안 반영 사항
+
+- 비밀번호는 평문 저장하지 않고 PBKDF2-HMAC-SHA256, 600,000 iterations, 랜덤 salt로 해시합니다.
+- 로그인 성공 시 세션을 재발급하여 세션 고정 공격 위험을 줄입니다.
+- 모든 POST 폼에 CSRF 토큰을 포함하고 서버에서 검증합니다.
+- 회원 영역과 관리자 영역은 Filter에서 접근 권한을 확인합니다.
+- JSP는 `WEB-INF/views` 하위에 배치하여 직접 URL 접근을 차단합니다.
+- Tomcat `CookieProcessor`에 SameSite=Lax를 지정하고 `web.xml`에서 세션 쿠키 HttpOnly를 활성화합니다.
+
+---
+
+## 17. 최종 제출 산출물
 
 - 프로젝트 소스코드
 - README.md
